@@ -50,6 +50,25 @@ begin
   end;
 end;
 
+procedure CreateBackup(TargetFunction:pointer; var backup:pointer);
+var
+  OldProcSize, Size, SaveSize:dword;
+  Next:pointer;
+begin
+  SaveSize := 0;
+  Next := TargetFunction;
+  while SaveSize < 5 do
+    begin
+      Size := SizeOfCode(Next);
+      Next := pointer(longword(Next) + Size);
+      Inc(SaveSize, Size);
+    end;
+  OldProcSize := SaveSize + 5;
+  backup:=VirtualAlloc(nil, OldProcSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+  Move(TargetFunction^, backup^, SaveSize);
+  byte(pointer(dword(backup) + SaveSize)^) := $E9;
+  dword(pointer(dword(backup) + SaveSize + 1)^) := dword(TargetFunction) - dword(backup) - 5;
+end;
 
 var
   DD:IDirectDraw7;
